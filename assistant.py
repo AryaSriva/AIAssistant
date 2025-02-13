@@ -13,21 +13,22 @@ client = openai.OpenAI(
     api_key=token,
 )
 messages = []
-with open("context.txt", "r+") as file:
-    for line in file:
-        if line != "":
-            role = line.split(":")[0]
-            content = line.split(":")[1][:-1]
-            messages += [{"role": role, "content": content}]
+
+file = open("context.txt", "r+")
+for line in file:
+    if line != "":
+        role = line.split(":")[0]
+        content = line.split(":")[1][:-1]
+        messages += [{"role": role, "content": content}]
 if messages == []:
     messages += [{"role": "system", "content": "You are a helpful assistant."}]
 
 
-def signal_handler(messages):
+def signal_handler(signum, frame):
     print("Okay see ya!")
     context = ""
     for message in messages:
-        context += f"{message[role]}:{message[content]}\n"
+        context += f"{message["role"]}:{message["content"]}\n"
     file.write(context)
     file.close()
     exit(0)
@@ -38,7 +39,7 @@ signal.signal(signal.SIGINT, signal_handler)
 print("Assistant: Hello! What's on your mind?")
 while True:
     user_message = input("User: ")
-    messages += [{"role": "user", "content": user_message}]
+    messages += [{"role": "user", "content": user_message.replace("\n", "")}]
     response = client.chat.completions.create(
         messages=messages,
         temperature=1.0,
@@ -47,4 +48,9 @@ while True:
         model=model_name,
     )
     print(f"Assistant: {response.choices[0].message.content}")
-    messages += [response.choices[0].message]
+    messages += [
+        {
+            "role": response.choices[0].message.role,
+            "content": response.choices[0].message.content.replace("\n", ""),
+        }
+    ]
