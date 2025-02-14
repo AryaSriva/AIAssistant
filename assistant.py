@@ -14,7 +14,10 @@ client = openai.OpenAI(
 )
 messages = []
 
-file = open("context.txt", "r+")
+try:
+    file = open("context.txt", "r+")
+except FileNotFoundError:
+    file = open("context.txt", "x+")
 for line in file:
     if line != "":
         role = line.split(":")[0]
